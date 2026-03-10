@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第一届"机电杯"五人制足球赛</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    background: linear-gradient(135deg, #0a5c2e 0%, #0d7a3a 40%, #1a8c4e 100%);
+    min-height: 100vh;
+    color: #fff;
+  }
+
+  .header {
+    text-align: center;
+    padding: 30px 20px 10px;
+  }
+
+  .header h1 {
+    font-size: 28px;
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.4);
+    letter-spacing: 4px;
+  }
+
+  .header .subtitle {
+    font-size: 14px;
+    opacity: 0.8;
+    margin-top: 6px;
+    letter-spacing: 2px;
+  }
+
+  /* Tabs */
+  .tab-bar {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px auto 0;
+    max-width: 700px;
+    padding: 0 15px;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 10px 0;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-radius: 8px;
+    background: transparent;
+    color: #fff;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.25s;
+    letter-spacing: 1px;
+  }
+
+  .tab-btn:hover { background: rgba(255,255,255,0.15); }
+  .tab-btn.active {
+    background: #fff;
+    color: #0a5c2e;
+    border-color: #fff;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Round buttons */
+  .round-bar {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 20px auto;
+    max-width: 700px;
+    padding: 0 15px;
+  }
+
+  .round-btn {
+    padding: 8px 18px;
+    border: 2px solid rgba(255,255,255,0.5);
+    border-radius: 25px;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+
+  .round-btn:hover { background: rgba(255,255,255,0.25); }
+  .round-btn.active {
+    background: #f5c518;
+    color: #1a1a1a;
+    border-color: #f5c518;
+    box-shadow: 0 3px 10px rgba(245,197,24,0.4);
+  }
+
+  /* Match cards */
+  .matches-container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 0 15px 30px;
+  }
+
+  .round-time {
+    text-align: center;
+    font-size: 13px;
+    opacity: 0.7;
+    margin-bottom: 12px;
+    min-height: 20px;
+  }
+
+  .match-card {
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(10px);
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid rgba(255,255,255,0.15);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .match-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  }
+
+  .team {
+    flex: 1;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 1px;
+  }
+
+  .team-left { text-align: right; padding-right: 15px; }
+  .team-right { text-align: left; padding-left: 15px; }
+
+  .team-tbd { opacity: 0.4; font-style: italic; }
+
+  .vs-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 90px;
+  }
+
+  .vs {
+    font-size: 13px;
+    font-weight: bold;
+    color: #f5c518;
+    letter-spacing: 2px;
+  }
+
+  .score-display {
+    font-size: 22px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    margin-top: 2px;
+    min-height: 28px;
+  }
+
+  .score-display.has-score { color: #f5c518; }
+
+  .match-num {
+    font-size: 11px;
+    opacity: 0.5;
+    margin-top: 2px;
+  }
+
+  /* Admin mode */
+  .admin-controls {
+    display: none;
+    margin-top: 8px;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .admin-mode .admin-controls { display: flex; }
+
+  .admin-controls input {
+    width: 45px;
+    padding: 4px;
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 6px;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+  }
+
+  .admin-controls input::placeholder { color: rgba(255,255,255,0.4); font-size: 11px; }
+  .admin-controls input:focus { outline: none; border-color: #f5c518; background: rgba(255,255,255,0.25); }
+
+  .admin-controls .card-label {
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    opacity: 0.7;
+  }
+
+  .admin-controls .card-label.yellow { color: #f5c518; }
+  .admin-controls .card-label.red { color: #ff4444; }
+
+  .admin-card-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    align-items: center;
+  }
+
+  .admin-card-group span { font-size: 10px; opacity: 0.6; }
+
+  .admin-save-btn {
+    padding: 4px 14px;
+    border: none;
+    border-radius: 6px;
+    background: #f5c518;
+    color: #1a1a1a;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .admin-save-btn:hover { background: #ffd84d; }
+
+  .admin-mode .match-card { flex-direction: column; }
+
+  .admin-mode .match-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  /* Standings table */
+  .standings-container {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 0 15px 30px;
+    overflow-x: auto;
+  }
+
+  .standings-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255,255,255,0.1);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .standings-table th {
+    background: rgba(0,0,0,0.3);
+    padding: 12px 8px;
+    font-size: 13px;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+  .standings-table td {
+    padding: 11px 8px;
+    text-align: center;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .standings-table tr:last-child td { border-bottom: none; }
+  .standings-table tr:hover td { background: rgba(255,255,255,0.05); }
+  .standings-table .rank { font-weight: bold; color: #f5c518; font-size: 16px; }
+  .standings-table .team-name { text-align: left; font-weight: bold; padding-left: 12px; white-space: nowrap; }
+  .standings-table .pts { font-weight: bold; color: #f5c518; font-size: 16px; }
+  .rank-1 { text-shadow: 0 0 8px rgba(245,197,24,0.6); }
+
+  /* Admin banner */
+  .admin-banner {
+    display: none;
+    text-align: center;
+    padding: 8px;
+    background: #f5c518;
+    color: #1a1a1a;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 1px;
+  }
+
+  .admin-mode .admin-banner { display: flex; justify-content: center; align-items: center; gap: 15px; }
+
+  .admin-clear-btn {
+    padding: 3px 12px;
+    border: 2px solid #c0392b;
+    border-radius: 6px;
+    background: #e74c3c;
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .admin-clear-btn:hover { background: #c0392b; }
+
+  /* Time edit in admin */
+  .time-edit { display: none; }
+  .admin-mode .time-edit { display: block; }
+  .time-edit input {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 6px;
+    color: #fff;
+    padding: 4px 8px;
+    font-size: 13px;
+    width: 200px;
+    text-align: center;
+  }
+  .time-edit input::placeholder { color: rgba(255,255,255,0.4); }
+  .time-edit input:focus { outline: none; border-color: #f5c518; }
+
+  /* Knockout phase labels */
+  .ko-phase-label {
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    margin: 20px 0 12px;
+    padding: 8px 0;
+    border-bottom: 2px solid rgba(255,255,255,0.2);
+    letter-spacing: 2px;
+    color: #f5c518;
+  }
+
+  .ko-section-title {
+    font-size: 13px;
+    opacity: 0.6;
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+
+  .ko-seed-info {
+    text-align: center;
+    margin: 10px 0 20px;
+    padding: 12px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .ko-seed-info .seed-tag {
+    display: inline-block;
+    background: rgba(245,197,24,0.2);
+    border: 1px solid rgba(245,197,24,0.4);
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin: 0 2px;
+    font-size: 12px;
+    color: #f5c518;
+    font-weight: bold;
+  }
+
+  .match-card.final-match {
+    border: 2px solid #f5c518;
+    background: rgba(245,197,24,0.12);
+  }
+
+  .champion-banner {
+    text-align: center;
+    padding: 16px;
+    margin-top: 8px;
+    font-size: 22px;
+    font-weight: bold;
+    color: #f5c518;
+    text-shadow: 0 0 15px rgba(245,197,24,0.5);
+    letter-spacing: 3px;
+  }
+
+  @media (max-width: 500px) {
+    .header h1 { font-size: 20px; }
+    .team { font-size: 13px; }
+    .score-display { font-size: 18px; }
+    .match-card { padding: 14px 12px; }
+    .standings-table th, .standings-table td { padding: 8px 4px; font-size: 12px; }
+    .ko-seed-info { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="admin-banner">
+  <span>管理模式 - 可编辑比分与红黄牌</span>
+  <button class="admin-clear-btn" onclick="clearAllData()">一键清空所有数据</button>
+</div>
+
+<div class="header">
+  <h1>第一届"机电杯"五人制足球赛</h1>
+  <div class="subtitle">机械与电气工程学院</div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('schedule')">单循环赛程</button>
+  <button class="tab-btn" onclick="switchTab('knockout')">淘汰赛赛程</button>
+  <button class="tab-btn" onclick="switchTab('standings')">积分榜</button>
+</div>
+
+<!-- Schedule Tab -->
+<div id="tab-schedule" class="tab-content active">
+  <div class="round-bar" id="roundBar"></div>
+  <div class="matches-container" id="matchesContainer"></div>
+</div>
+
+<!-- Knockout Tab -->
+<div id="tab-knockout" class="tab-content">
+  <div class="matches-container" id="knockoutContainer"></div>
+</div>
+
+<!-- Standings Tab -->
+<div id="tab-standings" class="tab-content">
+  <div class="standings-container">
+    <table class="standings-table">
+      <thead>
+        <tr>
+          <th>名次</th>
+          <th style="text-align:left;padding-left:12px;">球队</th>
+          <th>场次</th>
+          <th>胜</th>
+          <th>平</th>
+          <th>负</th>
+          <th>进球</th>
+          <th>失球</th>
+          <th>净胜球</th>
+          <th>黄牌</th>
+          <th>红牌</th>
+          <th>积分</th>
+        </tr>
+      </thead>
+      <tbody id="standingsBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const TEAMS = [
+  '黄金右脚队', '最佳守门员', '马嘉祺开大脚', '大明星男模队',
+  '说啥都不队', '跳了兄弟', '哈基米南北绿豆队', '中国boy队'
+];
+
+// Standard round-robin: fix team 0, rotate the rest
+function generateSchedule() {
+  const n = TEAMS.length;
+  const rounds = [];
+  const list = [];
+  for (let i = 1; i < n; i++) list.push(i);
+  for (let r = 0; r < n - 1; r++) {
+    const matches = [];
+    matches.push([0, list[list.length - 1]]);
+    for (let j = 0; j < (n - 2) / 2; j++) {
+      matches.push([list[j], list[list.length - 2 - j]]);
+    }
+    rounds.push(matches);
+    list.unshift(list.pop());
+  }
+  return rounds;
+}
+
+const SCHEDULE = generateSchedule();
+const IS_ADMIN = new URLSearchParams(window.location.search).get('admin') === 'true';
+const STORAGE_KEY = 'football_match_data';
+
+let matchData = loadData();
+let currentRound = 0;
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return { results: {}, roundTimes: {}, knockout: {} };
+}
+
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(matchData));
+}
+
+function getMatchKey(round, matchIdx) {
+  return `r${round}m${matchIdx}`;
+}
+
+if (IS_ADMIN) document.body.classList.add('admin-mode');
+
+// ==================== Tab switching ====================
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    const tabs = ['schedule', 'knockout', 'standings'];
+    b.classList.toggle('active', tab === tabs[i]);
+  });
+  ['tab-schedule', 'tab-knockout', 'tab-standings'].forEach(id => {
+    document.getElementById(id).classList.toggle('active', id === 'tab-' + tab);
+  });
+  if (tab === 'standings') renderStandings();
+  if (tab === 'knockout') renderKnockout();
+}
+
+// ==================== Round Robin ====================
+function renderRoundBar() {
+  const bar = document.getElementById('roundBar');
+  bar.innerHTML = '';
+  for (let i = 0; i < 7; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'round-btn' + (i === currentRound ? ' active' : '');
+    btn.textContent = `第${i + 1}轮`;
+    btn.onclick = () => { currentRound = i; renderRoundBar(); renderMatches(); };
+    bar.appendChild(btn);
+  }
+}
+
+function renderMatches() {
+  const container = document.getElementById('matchesContainer');
+  const matches = SCHEDULE[currentRound];
+  const roundTime = matchData.roundTimes[currentRound] || '';
+  let html = '';
+  html += `<div class="round-time">${roundTime || (IS_ADMIN ? '' : '比赛时间待定')}`;
+  if (IS_ADMIN) {
+    html += `<div class="time-edit"><input type="text" id="timeInput" placeholder="输入本轮比赛时间" value="${roundTime}" onchange="saveRoundTime(this.value)"></div>`;
+  }
+  html += `</div>`;
+
+  matches.forEach((pair, idx) => {
+    const key = getMatchKey(currentRound, idx);
+    html += buildMatchCardHTML(key, TEAMS[pair[0]], TEAMS[pair[1]], `第${currentRound * 4 + idx + 1}场`);
+  });
+  container.innerHTML = html;
+}
+
+function saveRoundTime(val) {
+  matchData.roundTimes[currentRound] = val;
+  saveData();
+}
+
+// ==================== Shared match card builder ====================
+function buildMatchCardHTML(key, homeTeam, awayTeam, label, extraClass) {
+  const result = matchData.results[key] || {};
+  const hasScore = result.homeGoals !== undefined && result.awayGoals !== undefined;
+  const homeName = homeTeam || '待定';
+  const awayName = awayTeam || '待定';
+  const homeTbd = homeTeam ? '' : ' team-tbd';
+  const awayTbd = awayTeam ? '' : ' team-tbd';
+  const cardClass = extraClass ? ` ${extraClass}` : '';
+
+  if (IS_ADMIN && homeTeam && awayTeam) {
+    return `
+      <div class="match-card${cardClass}">
+        <div class="match-row">
+          <div class="team team-left${homeTbd}">${homeName}</div>
+          <div class="vs-area">
+            <div class="vs">VS</div>
+            <div class="score-display ${hasScore ? 'has-score' : ''}">${hasScore ? result.homeGoals + ' - ' + result.awayGoals : ''}</div>
+            <div class="match-num">${label}</div>
+          </div>
+          <div class="team team-right${awayTbd}">${awayName}</div>
+        </div>
+        <div class="admin-controls" style="display:flex">
+          <div class="admin-card-group">
+            <span>${homeName}</span>
+            <input type="number" min="0" placeholder="进球" id="${key}_hg" value="${result.homeGoals ?? ''}">
+            <div class="card-label yellow">黄 <input type="number" min="0" placeholder="0" id="${key}_hy" value="${result.homeYellow ?? ''}"></div>
+            <div class="card-label red">红 <input type="number" min="0" placeholder="0" id="${key}_hr" value="${result.homeRed ?? ''}"></div>
+          </div>
+          <div class="admin-card-group" style="justify-content:center">
+            <button class="admin-save-btn" onclick="saveMatch('${key}', true)">保存</button>
+          </div>
+          <div class="admin-card-group">
+            <span>${awayName}</span>
+            <input type="number" min="0" placeholder="进球" id="${key}_ag" value="${result.awayGoals ?? ''}">
+            <div class="card-label yellow">黄 <input type="number" min="0" placeholder="0" id="${key}_ay" value="${result.awayYellow ?? ''}"></div>
+            <div class="card-label red">红 <input type="number" min="0" placeholder="0" id="${key}_ar" value="${result.awayRed ?? ''}"></div>
+          </div>
+        </div>
+      </div>`;
+  } else {
+    return `
+      <div class="match-card${cardClass}">
+        <div class="team team-left${homeTbd}">${homeName}</div>
+        <div class="vs-area">
+          <div class="vs">VS</div>
+          <div class="score-display ${hasScore ? 'has-score' : ''}">${hasScore ? result.homeGoals + ' - ' + result.awayGoals : ''}</div>
+          <div class="match-num">${label}</div>
+        </div>
+        <div class="team team-right${awayTbd}">${awayName}</div>
+      </div>`;
+  }
+}
+
+function saveMatch(key, isKnockout) {
+  const hg = document.getElementById(key + '_hg').value;
+  const ag = document.getElementById(key + '_ag').value;
+  const hy = document.getElementById(key + '_hy').value;
+  const hr = document.getElementById(key + '_hr').value;
+  const ay = document.getElementById(key + '_ay').value;
+  const ar = document.getElementById(key + '_ar').value;
+
+  if (hg === '' || ag === '') {
+    alert('请输入双方进球数');
+    return;
+  }
+
+  matchData.results[key] = {
+    homeGoals: parseInt(hg),
+    awayGoals: parseInt(ag),
+    homeYellow: parseInt(hy) || 0,
+    homeRed: parseInt(hr) || 0,
+    awayYellow: parseInt(ay) || 0,
+    awayRed: parseInt(ar) || 0
+  };
+  saveData();
+
+  if (isKnockout) {
+    renderKnockout();
+  } else {
+    renderMatches();
+  }
+}
+
+// ==================== Standings ====================
+function getStandings() {
+  const stats = {};
+  TEAMS.forEach(t => {
+    stats[t] = { played: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, gd: 0, yellow: 0, red: 0, pts: 0 };
+  });
+
+  SCHEDULE.forEach((round, ri) => {
+    round.forEach((pair, mi) => {
+      const key = getMatchKey(ri, mi);
+      const result = matchData.results[key];
+      if (!result || result.homeGoals === undefined) return;
+
+      const home = TEAMS[pair[0]];
+      const away = TEAMS[pair[1]];
+      const hg = result.homeGoals;
+      const ag = result.awayGoals;
+
+      stats[home].played++; stats[away].played++;
+      stats[home].gf += hg; stats[home].ga += ag;
+      stats[away].gf += ag; stats[away].ga += hg;
+      stats[home].yellow += result.homeYellow || 0;
+      stats[home].red += result.homeRed || 0;
+      stats[away].yellow += result.awayYellow || 0;
+      stats[away].red += result.awayRed || 0;
+
+      if (hg > ag) { stats[home].w++; stats[home].pts += 3; stats[away].l++; }
+      else if (hg < ag) { stats[away].w++; stats[away].pts += 3; stats[home].l++; }
+      else { stats[home].d++; stats[home].pts += 1; stats[away].d++; stats[away].pts += 1; }
+    });
+  });
+
+  TEAMS.forEach(t => { stats[t].gd = stats[t].gf - stats[t].ga; });
+
+  const sorted = TEAMS.slice().sort((a, b) => {
+    const sa = stats[a], sb = stats[b];
+    if (sb.pts !== sa.pts) return sb.pts - sa.pts;
+    if (sb.gd !== sa.gd) return sb.gd - sa.gd;
+    if (sb.gf !== sa.gf) return sb.gf - sa.gf;
+    const cardA = sa.yellow + sa.red * 3;
+    const cardB = sb.yellow + sb.red * 3;
+    return cardA - cardB;
+  });
+
+  return { stats, sorted };
+}
+
+function renderStandings() {
+  const { stats, sorted } = getStandings();
+  const tbody = document.getElementById('standingsBody');
+  tbody.innerHTML = sorted.map((t, i) => {
+    const s = stats[t];
+    return `<tr>
+      <td class="rank ${i === 0 ? 'rank-1' : ''}">${i + 1}</td>
+      <td class="team-name">${t}</td>
+      <td>${s.played}</td>
+      <td>${s.w}</td>
+      <td>${s.d}</td>
+      <td>${s.l}</td>
+      <td>${s.gf}</td>
+      <td>${s.ga}</td>
+      <td>${s.gd >= 0 ? '+' + s.gd : s.gd}</td>
+      <td style="color:#f5c518">${s.yellow}</td>
+      <td style="color:#ff4444">${s.red}</td>
+      <td class="pts">${s.pts}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ==================== Knockout ====================
+/*
+  Bracket structure (from planning doc diagram):
+
+  Phase 1 (首轮):
+    ko_m1: A(1st) vs B(2nd)     [上半区]
+    ko_m2: C(3rd) vs D(4th)     [上半区]
+    ko_m3: E(5th) vs F(6th)     [下半区]
+    ko_m4: G(7th) vs H(8th)     [下半区]
+
+  Phase 2:
+    ko_m5: ko_m1胜 vs ko_m2胜   → ABCD胜者 (直通总决赛)
+    ko_m6: ko_m3胜 vs ko_m1负   → ABEF胜者
+    ko_m7: ko_m4胜 vs ko_m2负   → CDGH胜者
+
+  Phase 3:
+    ko_m8: ko_m6胜 vs ko_m7胜   → ABEF/CDGH胜者
+
+  Phase 4:
+    ko_m9: ko_m8胜 vs ko_m5负   → 败者组决赛胜者
+
+  Phase 5 (总决赛):
+    ko_m10: ko_m5胜 vs ko_m9胜  → 总冠军
+*/
+
+function getMatchWinner(key) {
+  const r = matchData.results[key];
+  if (!r || r.homeGoals === undefined) return null;
+  // In knockout, no draws - but we still determine by score (penalty decided by input)
+  if (r.homeGoals > r.awayGoals) return 'home';
+  if (r.awayGoals > r.homeGoals) return 'away';
+  // Draw in knockout shouldn't happen (penalty shootout result should be entered)
+  // But if it does, return null to indicate unresolved
+  return null;
+}
+
+function getKnockoutTeams() {
+  const { sorted } = getStandings();
+  // Check if all 28 round-robin matches are played
+  let allPlayed = true;
+  for (let ri = 0; ri < 7; ri++) {
+    for (let mi = 0; mi < 4; mi++) {
+      const key = getMatchKey(ri, mi);
+      const r = matchData.results[key];
+      if (!r || r.homeGoals === undefined) { allPlayed = false; break; }
+    }
+    if (!allPlayed) break;
+  }
+
+  if (!allPlayed) return null;
+
+  // A=1st, B=2nd, ... H=8th
+  return {
+    A: sorted[0], B: sorted[1], C: sorted[2], D: sorted[3],
+    E: sorted[4], F: sorted[5], G: sorted[6], H: sorted[7]
+  };
+}
+
+function resolveKnockoutBracket(seeds) {
+  if (!seeds) return {};
+
+  const bracket = {};
+
+  // Phase 1
+  bracket.ko_m1 = { home: seeds.A, away: seeds.B };
+  bracket.ko_m2 = { home: seeds.C, away: seeds.D };
+  bracket.ko_m3 = { home: seeds.E, away: seeds.F };
+  bracket.ko_m4 = { home: seeds.G, away: seeds.H };
+
+  // Resolve Phase 1
+  const m1w = resolveWL('ko_m1', bracket);
+  const m2w = resolveWL('ko_m2', bracket);
+  const m3w = resolveWL('ko_m3', bracket);
+  const m4w = resolveWL('ko_m4', bracket);
+
+  // Phase 2
+  bracket.ko_m5 = { home: m1w.winner, away: m2w.winner };
+  bracket.ko_m6 = { home: m3w.winner, away: m1w.loser };
+  bracket.ko_m7 = { home: m4w.winner, away: m2w.loser };
+
+  const m5w = resolveWL('ko_m5', bracket);
+  const m6w = resolveWL('ko_m6', bracket);
+  const m7w = resolveWL('ko_m7', bracket);
+
+  // Phase 3
+  bracket.ko_m8 = { home: m6w.winner, away: m7w.winner };
+  const m8w = resolveWL('ko_m8', bracket);
+
+  // Phase 4
+  bracket.ko_m9 = { home: m8w.winner, away: m5w.loser };
+  const m9w = resolveWL('ko_m9', bracket);
+
+  // Phase 5 Grand Final
+  bracket.ko_m10 = { home: m5w.winner, away: m9w.winner };
+
+  return bracket;
+}
+
+function resolveWL(key, bracket) {
+  const match = bracket[key];
+  if (!match || !match.home || !match.away) return { winner: null, loser: null };
+
+  const side = getMatchWinner(key);
+  if (!side) return { winner: null, loser: null };
+
+  return {
+    winner: side === 'home' ? match.home : match.away,
+    loser: side === 'home' ? match.away : match.home
+  };
+}
+
+function renderKnockout() {
+  const container = document.getElementById('knockoutContainer');
+  const seeds = getKnockoutTeams();
+
+  if (!seeds) {
+    container.innerHTML = `
+      <div style="text-align:center; padding:40px 20px; opacity:0.7;">
+        <div style="font-size:40px; margin-bottom:15px;">&#9917;</div>
+        <div style="font-size:16px; font-weight:bold; margin-bottom:8px;">单循环赛尚未全部结束</div>
+        <div style="font-size:13px;">所有7轮28场比赛结束后，将根据积分排名自动生成淘汰赛对阵</div>
+      </div>`;
+    return;
+  }
+
+  const bracket = resolveKnockoutBracket(seeds);
+  const koTime = matchData.roundTimes['knockout'] || '';
+
+  let html = '';
+
+  // Round time for knockout
+  html += `<div class="round-time">${koTime || (IS_ADMIN ? '' : '比赛时间待定')}`;
+  if (IS_ADMIN) {
+    html += `<div class="time-edit"><input type="text" id="koTimeInput" placeholder="输入淘汰赛比赛时间" value="${koTime}" onchange="saveKoTime(this.value)"></div>`;
+  }
+  html += `</div>`;
+
+  // Seed info
+  html += `<div class="ko-seed-info">`;
+  html += `<div style="margin-bottom:6px; font-weight:bold; color:#f5c518;">单循环排名 → 淘汰赛分组</div>`;
+  const labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+  const seedArr = [seeds.A, seeds.B, seeds.C, seeds.D, seeds.E, seeds.F, seeds.G, seeds.H];
+  for (let i = 0; i < 8; i++) {
+    const zone = i < 4 ? '上半区' : '下半区';
+    html += `<span class="seed-tag">${labels[i]}</span> 第${i + 1}名 ${seedArr[i]}${i < 7 ? '&nbsp;&nbsp;' : ''}`;
+    if (i === 3) html += `<br>`;
+  }
+  html += `<br><div style="margin-top:6px; font-size:12px; opacity:0.7;">上半区(A-D)：双败淘汰 &nbsp;|&nbsp; 下半区(E-H)：单败淘汰，与上半区负者交叉</div>`;
+  html += `</div>`;
+
+  // Phase 1
+  html += `<div class="ko-phase-label">首轮</div>`;
+  html += `<div class="ko-section-title">上半区</div>`;
+  html += buildMatchCardHTML('ko_m1', bracket.ko_m1.home, bracket.ko_m1.away, 'A vs B');
+  html += buildMatchCardHTML('ko_m2', bracket.ko_m2.home, bracket.ko_m2.away, 'C vs D');
+  html += `<div class="ko-section-title">下半区</div>`;
+  html += buildMatchCardHTML('ko_m3', bracket.ko_m3.home, bracket.ko_m3.away, 'E vs F');
+  html += buildMatchCardHTML('ko_m4', bracket.ko_m4.home, bracket.ko_m4.away, 'G vs H');
+
+  // Phase 2
+  html += `<div class="ko-phase-label">第二轮</div>`;
+  html += `<div class="ko-section-title">上半区胜者对决</div>`;
+  html += buildMatchCardHTML('ko_m5', bracket.ko_m5.home, bracket.ko_m5.away, 'A/B胜 vs C/D胜');
+  html += `<div class="ko-section-title">交叉对决</div>`;
+  html += buildMatchCardHTML('ko_m6', bracket.ko_m6.home, bracket.ko_m6.away, 'E/F胜 vs A/B负');
+  html += buildMatchCardHTML('ko_m7', bracket.ko_m7.home, bracket.ko_m7.away, 'G/H胜 vs C/D负');
+
+  // Phase 3
+  html += `<div class="ko-phase-label">第三轮</div>`;
+  html += `<div class="ko-section-title">败者组半决赛</div>`;
+  html += buildMatchCardHTML('ko_m8', bracket.ko_m8.home, bracket.ko_m8.away, 'ABEF胜 vs CDGH胜');
+
+  // Phase 4
+  html += `<div class="ko-phase-label">第四轮</div>`;
+  html += `<div class="ko-section-title">败者组决赛</div>`;
+  html += buildMatchCardHTML('ko_m9', bracket.ko_m9.home, bracket.ko_m9.away, '败者组胜 vs ABCD负');
+
+  // Phase 5 Grand Final
+  html += `<div class="ko-phase-label">总决赛</div>`;
+  html += buildMatchCardHTML('ko_m10', bracket.ko_m10.home, bracket.ko_m10.away, '总决赛', 'final-match');
+
+  // Show champion
+  const finalResult = getMatchWinner('ko_m10');
+  if (finalResult && bracket.ko_m10.home && bracket.ko_m10.away) {
+    const champion = finalResult === 'home' ? bracket.ko_m10.home : bracket.ko_m10.away;
+    html += `<div class="champion-banner">&#127942; 总冠军：${champion} &#127942;</div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function saveKoTime(val) {
+  matchData.roundTimes['knockout'] = val;
+  saveData();
+}
+
+// ==================== Clear all data ====================
+function clearAllData() {
+  if (!confirm('确定要清空所有比分、红黄牌和时间数据吗？此操作不可撤销！')) return;
+  if (!confirm('再次确认：真的要清空吗？')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  matchData = { results: {}, roundTimes: {}, knockout: {} };
+  renderRoundBar();
+  renderMatches();
+  renderStandings();
+  renderKnockout();
+  alert('已清空所有数据');
+}
+
+// ==================== Init ====================
+renderRoundBar();
+renderMatches();
+</script>
+</body>
+</html>
