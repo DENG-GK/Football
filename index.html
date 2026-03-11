@@ -624,10 +624,14 @@ function generateSchedule() {
     for (let j = 0; j < (n - 2) / 2; j++) {
       matches.push([list[j], list[list.length - 2 - j]]);
     }
-    // On Saturday rounds, move 黄金右脚队's match to position 3 (4th match, 11:00)
+    // 黄金右脚队(team 0) is always in matches[0], move it:
+    // Saturday: position 3 (4th match, 11:00)
+    // Sunday: position 2 (3rd match, 10:20)
+    const hjMatch = matches.splice(0, 1)[0];
     if (SATURDAY_ROUNDS.includes(r)) {
-      const hjMatch = matches.splice(0, 1)[0];
       matches.push(hjMatch);
+    } else {
+      matches.splice(2, 0, hjMatch);
     }
     rounds.push(matches);
     list.unshift(list.pop());
