@@ -381,6 +381,131 @@
     letter-spacing: 3px;
   }
 
+  /* Match info bar (time + referees) */
+  .match-info-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 6px 12px 0;
+    margin-top: 6px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 12px;
+    opacity: 0.7;
+  }
+
+  .match-time-tag {
+    background: rgba(245,197,24,0.25);
+    border: 1px solid rgba(245,197,24,0.5);
+    border-radius: 4px;
+    padding: 3px 10px;
+    color: #f5c518;
+    font-weight: bold;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .match-referees {
+    text-align: right;
+    font-size: 13px;
+    color: rgba(255,255,255,0.95);
+  }
+
+  .match-referees .ref-label {
+    color: rgba(255,255,255,0.6);
+    margin-right: 4px;
+  }
+
+  /* Normal (non-admin) cards need flex-wrap for info bar */
+  .match-card {
+    flex-wrap: wrap;
+  }
+
+  /* Referee schedule tab */
+  .referee-container {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 0 15px 30px;
+  }
+
+  .referee-round-card {
+    background: rgba(255,255,255,0.1);
+    border-radius: 14px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+
+  .referee-round-header {
+    background: rgba(0,0,0,0.3);
+    padding: 12px 16px;
+    font-weight: bold;
+    font-size: 15px;
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .referee-round-date {
+    font-size: 13px;
+    opacity: 0.7;
+    font-weight: normal;
+  }
+
+  .referee-match-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    gap: 12px;
+    font-size: 13px;
+  }
+
+  .referee-match-row:last-child { border-bottom: none; }
+
+  .referee-match-time {
+    color: #f5c518;
+    font-weight: bold;
+    min-width: 45px;
+    font-size: 13px;
+  }
+
+  .referee-match-teams {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .referee-match-refs {
+    text-align: right;
+    min-width: 120px;
+    color: rgba(255,255,255,0.8);
+  }
+
+  .referee-match-refs .ref-name {
+    display: inline-block;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin: 1px 2px;
+    font-size: 12px;
+  }
+
+  .referee-legend {
+    text-align: center;
+    padding: 12px;
+    margin-bottom: 16px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .referee-legend .player-ref {
+    color: #f5c518;
+  }
+
   @media (max-width: 500px) {
     .header h1 { font-size: 20px; }
     .team { font-size: 13px; }
@@ -388,6 +513,10 @@
     .match-card { padding: 14px 12px; }
     .standings-table th, .standings-table td { padding: 8px 4px; font-size: 12px; }
     .ko-seed-info { font-size: 11px; }
+    .match-info-bar { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .match-referees { text-align: left; }
+    .referee-match-row { flex-wrap: wrap; }
+    .referee-match-refs { min-width: 100%; margin-top: 4px; text-align: left; }
   }
 </style>
 </head>
@@ -407,6 +536,7 @@
   <button class="tab-btn active" onclick="switchTab('schedule')">单循环赛程</button>
   <button class="tab-btn" onclick="switchTab('knockout')">淘汰赛赛程</button>
   <button class="tab-btn" onclick="switchTab('standings')">积分榜</button>
+  <button class="tab-btn" onclick="switchTab('referees')">裁判安排</button>
 </div>
 
 <!-- Schedule Tab -->
@@ -418,6 +548,11 @@
 <!-- Knockout Tab -->
 <div id="tab-knockout" class="tab-content">
   <div class="matches-container" id="knockoutContainer"></div>
+</div>
+
+<!-- Referees Tab -->
+<div id="tab-referees" class="tab-content">
+  <div class="referee-container" id="refereeContainer"></div>
 </div>
 
 <!-- Standings Tab -->
@@ -451,7 +586,33 @@ const TEAMS = [
   '说啥都不队', '跳了兄弟', '哈基米南北绿豆队', '中国boy队'
 ];
 
+const MATCH_TIMES = ['9:00', '9:40', '10:20', '11:00'];
+
+// Round dates: Sat 3/14, Sun 3/15, Sat 3/21, Sun 3/22, Sat 3/28, Sun 3/29, Sat 4/4
+const ROUND_DATES = [
+  '3月14日（周六）', '3月15日（周日）',
+  '3月21日（周六）', '3月22日（周日）',
+  '3月28日（周六）', '3月29日（周日）',
+  '4月4日（周六）'
+];
+
+// Which rounds are Saturday (0-indexed): rounds 0,2,4,6
+const SATURDAY_ROUNDS = [0, 2, 4, 6];
+
+// Referees: name + team they belong to (null if not a player)
+const REFEREES = [
+  { name: '杨天一', team: '大明星男模队' },
+  { name: '林睿', team: null },
+  { name: '何嘉豪', team: '哈基米南北绿豆队' },
+  { name: '林胜彬', team: null },
+  { name: '张亚鹏', team: null },
+  { name: '谢志钦', team: '中国boy队' },
+  { name: '夏明泽', team: '大明星男模队' },
+  { name: '钟文', team: '大明星男模队' }
+];
+
 // Standard round-robin: fix team 0, rotate the rest
+// On Saturday rounds, 黄金右脚队 (team 0) is placed in match 4 (index 3)
 function generateSchedule() {
   const n = TEAMS.length;
   const rounds = [];
@@ -463,13 +624,58 @@ function generateSchedule() {
     for (let j = 0; j < (n - 2) / 2; j++) {
       matches.push([list[j], list[list.length - 2 - j]]);
     }
+    // On Saturday rounds, move 黄金右脚队's match to position 3 (4th match, 11:00)
+    if (SATURDAY_ROUNDS.includes(r)) {
+      const hjMatch = matches.splice(0, 1)[0];
+      matches.push(hjMatch);
+    }
     rounds.push(matches);
     list.unshift(list.pop());
   }
   return rounds;
 }
 
+// ==================== Referee Assignment ====================
+// Assign 2 referees per match, avoiding conflicts (referee can't ref their own team's match)
+function assignRefereesForRound(roundIdx) {
+  const matches = SCHEDULE[roundIdx];
+  const matchTeams = matches.map(pair => [TEAMS[pair[0]], TEAMS[pair[1]]]);
+  const assignment = [[], [], [], []];
+
+  // Sort referees by constraint level (most constrained first)
+  const refOrder = REFEREES.map((ref, idx) => {
+    let availCount = 0;
+    for (let mi = 0; mi < 4; mi++) {
+      if (!ref.team || !matchTeams[mi].includes(ref.team)) availCount++;
+    }
+    return { ref, idx, availCount };
+  }).sort((a, b) => a.availCount - b.availCount);
+
+  for (const { ref } of refOrder) {
+    let bestMatch = -1;
+    let bestCount = 3;
+    for (let mi = 0; mi < 4; mi++) {
+      if (assignment[mi].length >= 2) continue;
+      if (ref.team && matchTeams[mi].includes(ref.team)) continue;
+      if (assignment[mi].length < bestCount) {
+        bestCount = assignment[mi].length;
+        bestMatch = mi;
+      }
+    }
+    if (bestMatch >= 0) {
+      assignment[bestMatch].push(ref.name);
+    }
+  }
+  return assignment;
+}
+
+// Pre-compute all referee assignments
+const ALL_REFEREE_ASSIGNMENTS = [];
+
+
 const SCHEDULE = generateSchedule();
+for (let r = 0; r < 7; r++) ALL_REFEREE_ASSIGNMENTS.push(assignRefereesForRound(r));
+
 const IS_ADMIN = new URLSearchParams(window.location.search).get('admin') === 'true';
 const STORAGE_KEY = 'football_match_data';
 
@@ -496,15 +702,16 @@ if (IS_ADMIN) document.body.classList.add('admin-mode');
 
 // ==================== Tab switching ====================
 function switchTab(tab) {
+  const tabs = ['schedule', 'knockout', 'standings', 'referees'];
   document.querySelectorAll('.tab-btn').forEach((b, i) => {
-    const tabs = ['schedule', 'knockout', 'standings'];
     b.classList.toggle('active', tab === tabs[i]);
   });
-  ['tab-schedule', 'tab-knockout', 'tab-standings'].forEach(id => {
-    document.getElementById(id).classList.toggle('active', id === 'tab-' + tab);
+  tabs.forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
   });
   if (tab === 'standings') renderStandings();
   if (tab === 'knockout') renderKnockout();
+  if (tab === 'referees') renderRefereeSchedule();
 }
 
 // ==================== Round Robin ====================
@@ -523,17 +730,20 @@ function renderRoundBar() {
 function renderMatches() {
   const container = document.getElementById('matchesContainer');
   const matches = SCHEDULE[currentRound];
-  const roundTime = matchData.roundTimes[currentRound] || '';
+  const refAssignment = ALL_REFEREE_ASSIGNMENTS[currentRound];
   let html = '';
-  html += `<div class="round-time">${roundTime || (IS_ADMIN ? '' : '比赛时间待定')}`;
+  html += `<div class="round-time">${ROUND_DATES[currentRound]}`;
   if (IS_ADMIN) {
-    html += `<div class="time-edit"><input type="text" id="timeInput" placeholder="输入本轮比赛时间" value="${roundTime}" onchange="saveRoundTime(this.value)"></div>`;
+    const roundTime = matchData.roundTimes[currentRound] || '';
+    html += `<div class="time-edit"><input type="text" id="timeInput" placeholder="补充说明（如场地）" value="${roundTime}" onchange="saveRoundTime(this.value)"></div>`;
   }
   html += `</div>`;
 
   matches.forEach((pair, idx) => {
     const key = getMatchKey(currentRound, idx);
-    html += buildMatchCardHTML(key, TEAMS[pair[0]], TEAMS[pair[1]], `第${currentRound * 4 + idx + 1}场`);
+    const matchTime = MATCH_TIMES[idx];
+    const refs = refAssignment[idx];
+    html += buildMatchCardHTML(key, TEAMS[pair[0]], TEAMS[pair[1]], `第${currentRound * 4 + idx + 1}场`, '', matchTime, refs);
   });
   container.innerHTML = html;
 }
@@ -544,7 +754,7 @@ function saveRoundTime(val) {
 }
 
 // ==================== Shared match card builder ====================
-function buildMatchCardHTML(key, homeTeam, awayTeam, label, extraClass) {
+function buildMatchCardHTML(key, homeTeam, awayTeam, label, extraClass, matchTime, refs) {
   const result = matchData.results[key] || {};
   const hasScore = result.homeGoals !== undefined && result.awayGoals !== undefined;
   const homeName = homeTeam || '待定';
@@ -552,6 +762,17 @@ function buildMatchCardHTML(key, homeTeam, awayTeam, label, extraClass) {
   const homeTbd = homeTeam ? '' : ' team-tbd';
   const awayTbd = awayTeam ? '' : ' team-tbd';
   const cardClass = extraClass ? ` ${extraClass}` : '';
+
+  // Info bar with time and referees (only for round-robin matches that have this data)
+  let infoBar = '';
+  if (matchTime || (refs && refs.length)) {
+    infoBar = `<div class="match-info-bar">`;
+    infoBar += matchTime ? `<span class="match-time-tag">${matchTime}</span>` : '<span></span>';
+    if (refs && refs.length) {
+      infoBar += `<span class="match-referees"><span class="ref-label">裁判：</span>${refs.join('、')}</span>`;
+    }
+    infoBar += `</div>`;
+  }
 
   if (IS_ADMIN && homeTeam && awayTeam) {
     return `
@@ -564,7 +785,7 @@ function buildMatchCardHTML(key, homeTeam, awayTeam, label, extraClass) {
             <div class="match-num">${label}</div>
           </div>
           <div class="team team-right${awayTbd}">${awayName}</div>
-        </div>
+        </div>${infoBar}
         <div class="admin-controls" style="display:flex">
           <div class="admin-card-group">
             <span>${homeName}</span>
@@ -592,7 +813,7 @@ function buildMatchCardHTML(key, homeTeam, awayTeam, label, extraClass) {
           <div class="score-display ${hasScore ? 'has-score' : ''}">${hasScore ? result.homeGoals + ' - ' + result.awayGoals : ''}</div>
           <div class="match-num">${label}</div>
         </div>
-        <div class="team team-right${awayTbd}">${awayName}</div>
+        <div class="team team-right${awayTbd}">${awayName}</div>${infoBar}
       </div>`;
   }
 }
@@ -890,6 +1111,52 @@ function renderKnockout() {
 function saveKoTime(val) {
   matchData.roundTimes['knockout'] = val;
   saveData();
+}
+
+// ==================== Referee Schedule ====================
+function renderRefereeSchedule() {
+  const container = document.getElementById('refereeContainer');
+  let html = '';
+
+  // Legend
+  html += `<div class="referee-legend">`;
+  html += `<div style="font-weight:bold; color:#f5c518; margin-bottom:6px;">裁判员名单（共${REFEREES.length}人）</div>`;
+  REFEREES.forEach(r => {
+    if (r.team) {
+      html += `<span class="player-ref">${r.name}</span><span style="opacity:0.5">（${r.team}）</span>&nbsp;&nbsp;`;
+    } else {
+      html += `${r.name}<span style="opacity:0.5">（无参赛）</span>&nbsp;&nbsp;`;
+    }
+  });
+  html += `<br><div style="margin-top:6px; font-size:12px; opacity:0.7;">黄色标注 = 兼任球员，不会被分配到自己球队的比赛中执裁</div>`;
+  html += `</div>`;
+
+  // Per-round schedule
+  for (let r = 0; r < 7; r++) {
+    const matches = SCHEDULE[r];
+    const refs = ALL_REFEREE_ASSIGNMENTS[r];
+    html += `<div class="referee-round-card">`;
+    html += `<div class="referee-round-header">
+      <span>第${r + 1}轮</span>
+      <span class="referee-round-date">${ROUND_DATES[r]}</span>
+    </div>`;
+    matches.forEach((pair, mi) => {
+      const home = TEAMS[pair[0]];
+      const away = TEAMS[pair[1]];
+      const matchRefs = refs[mi];
+      html += `<div class="referee-match-row">
+        <span class="referee-match-time">${MATCH_TIMES[mi]}</span>
+        <span class="referee-match-teams">${home} vs ${away}</span>
+        <span class="referee-match-refs">${matchRefs.map(n => {
+          const isPlayer = REFEREES.find(r => r.name === n && r.team);
+          return `<span class="ref-name" style="${isPlayer ? 'color:#f5c518' : ''}">${n}</span>`;
+        }).join('')}</span>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  container.innerHTML = html;
 }
 
 // ==================== Clear all data ====================
