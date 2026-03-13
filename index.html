@@ -606,7 +606,6 @@ const REFEREES = [
   { name: '何嘉豪', team: '哈基米南北绿豆队' },
   { name: '林胜彬', team: null },
   { name: '张亚鹏', team: null },
-  { name: '谢志钦', team: '中国boy队' },
   { name: '夏明泽', team: '大明星男模队' },
   { name: '钟文', team: '大明星男模队' }
 ];
@@ -640,34 +639,45 @@ function generateSchedule() {
 }
 
 // ==================== Referee Assignment ====================
-// Assign 2 referees per match, avoiding conflicts (referee can't ref their own team's match)
+// Assign 3 referees per match, avoiding conflicts (referee can't ref their own team's match)
+// 张亚鹏第一周（第1-2轮）缺席，由杨天一代替
 function assignRefereesForRound(roundIdx) {
   const matches = SCHEDULE[roundIdx];
   const matchTeams = matches.map(pair => [TEAMS[pair[0]], TEAMS[pair[1]]]);
   const assignment = [[], [], [], []];
 
-  // Sort referees by constraint level (most constrained first)
-  const refOrder = REFEREES.map((ref, idx) => {
-    let availCount = 0;
-    for (let mi = 0; mi < 4; mi++) {
-      if (!ref.team || !matchTeams[mi].includes(ref.team)) availCount++;
-    }
-    return { ref, idx, availCount };
-  }).sort((a, b) => a.availCount - b.availCount);
+  // 张亚鹏第1-2轮不可用
+  const availableRefs = REFEREES.filter(ref => {
+    if (ref.name === '张亚鹏' && roundIdx <= 1) return false;
+    return true;
+  });
 
-  for (const { ref } of refOrder) {
-    let bestMatch = -1;
-    let bestCount = 3;
+  // 3 refs per match × 4 matches = 12 slots, refs can officiate multiple matches
+  for (let slot = 0; slot < 3; slot++) {
     for (let mi = 0; mi < 4; mi++) {
-      if (assignment[mi].length >= 2) continue;
-      if (ref.team && matchTeams[mi].includes(ref.team)) continue;
-      if (assignment[mi].length < bestCount) {
-        bestCount = assignment[mi].length;
-        bestMatch = mi;
+      if (assignment[mi].length > slot) continue;
+
+      let bestRef = null;
+      let bestCount = Infinity;
+
+      for (const ref of availableRefs) {
+        if (assignment[mi].includes(ref.name)) continue;
+        if (ref.team && matchTeams[mi].includes(ref.team)) continue;
+
+        // Prefer refs with fewest total assignments this round
+        let totalAssignments = 0;
+        for (let j = 0; j < 4; j++) {
+          if (assignment[j].includes(ref.name)) totalAssignments++;
+        }
+        if (totalAssignments < bestCount) {
+          bestCount = totalAssignments;
+          bestRef = ref;
+        }
       }
-    }
-    if (bestMatch >= 0) {
-      assignment[bestMatch].push(ref.name);
+
+      if (bestRef) {
+        assignment[mi].push(bestRef.name);
+      }
     }
   }
   return assignment;
