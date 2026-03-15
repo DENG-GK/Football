@@ -691,21 +691,28 @@ const SCHEDULE = generateSchedule();
 for (let r = 0; r < 7; r++) ALL_REFEREE_ASSIGNMENTS.push(assignRefereesForRound(r));
 
 const IS_ADMIN = new URLSearchParams(window.location.search).get('admin') === 'true';
-const STORAGE_KEY = 'football_match_data';
+const FIREBASE_URL = 'https://foolball-cbd26-default-rtdb.asia-southeast1.firebasedatabase.app';
 
-let matchData = loadData();
+let matchData = { results: {}, roundTimes: {}, knockout: {} };
 let currentRound = 0;
 
-function loadData() {
+async function loadData() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch(e) {}
+    const res = await fetch(FIREBASE_URL + '/data.json');
+    const data = await res.json();
+    if (data) return data;
+  } catch(e) {
+    console.error('读取数据失败:', e);
+  }
   return { results: {}, roundTimes: {}, knockout: {} };
 }
 
 function saveData() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(matchData));
+  fetch(FIREBASE_URL + '/data.json', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(matchData)
+  }).catch(e => console.error('保存数据失败:', e));
 }
 
 function getMatchKey(round, matchIdx) {
@@ -1187,8 +1194,28 @@ function clearAllData() {
 }
 
 // ==================== Init ====================
-renderRoundBar();
-renderMatches();
+async function init() {
+  matchData = await loadData();
+
+  // 迁移：如果 Firebase 为空但 localStorage 有旧数据，自动上传
+  if (!matchData.results || Object.keys(matchData.results).length === 0) {
+    try {
+      const local = localStorage.getItem('football_match_data');
+      if (local) {
+        const localData = JSON.parse(local);
+        if (localData.results && Object.keys(localData.results).length > 0) {
+          matchData = localData;
+          saveData(); // 上传到 Firebase
+          console.log('已将本地数据迁移到 Firebase');
+        }
+      }
+    } catch(e) {}
+  }
+
+  renderRoundBar();
+  renderMatches();
+}
+init();
 </script>
 </body>
 </html>
