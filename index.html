@@ -586,7 +586,13 @@ const TEAMS = [
   '说啥都不队', '跳了兄弟', '哈基米南北绿豆队', '中国boy队'
 ];
 
-const MATCH_TIMES = ['9:00', '9:40', '10:20', '11:00'];
+const DEFAULT_MATCH_TIMES = ['9:00', '9:40', '10:20', '11:00'];
+const ROUND_MATCH_TIMES = {
+  2: ['14:30', '15:10', '15:50', '16:30']
+};
+function getMatchTimes(round) {
+  return ROUND_MATCH_TIMES[round] || DEFAULT_MATCH_TIMES;
+}
 
 // Round dates: Sat 3/14, Sun 3/15, Sat 3/21, Sun 3/22, Sat 3/28, Sun 3/29, Sat 4/4
 const ROUND_DATES = [
@@ -762,7 +768,7 @@ function renderMatches() {
 
   matches.forEach((pair, idx) => {
     const key = getMatchKey(currentRound, idx);
-    const matchTime = MATCH_TIMES[idx];
+    const matchTime = getMatchTimes(currentRound)[idx];
     const refs = refAssignment[idx];
     html += buildMatchCardHTML(key, TEAMS[pair[0]], TEAMS[pair[1]], `第${currentRound * 4 + idx + 1}场`, '', matchTime, refs);
   });
@@ -1166,7 +1172,7 @@ function renderRefereeSchedule() {
       const away = TEAMS[pair[1]];
       const matchRefs = refs[mi];
       html += `<div class="referee-match-row">
-        <span class="referee-match-time">${MATCH_TIMES[mi]}</span>
+        <span class="referee-match-time">${getMatchTimes(r)[mi]}</span>
         <span class="referee-match-teams">${home} vs ${away}</span>
         <span class="referee-match-refs">${matchRefs.map(n => {
           const isPlayer = REFEREES.find(r => r.name === n && r.team);
