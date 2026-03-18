@@ -1208,6 +1208,10 @@ function clearAllData() {
 // ==================== Init ====================
 async function init() {
   matchData = await loadData();
+  // 确保所有必要属性存在（Firebase 会自动删除空对象）
+  matchData.results = matchData.results || {};
+  matchData.roundTimes = matchData.roundTimes || {};
+  matchData.knockout = matchData.knockout || {};
 
   // 迁移：如果 Firebase 为空但 localStorage 有旧数据，自动上传
   if (!matchData.results || Object.keys(matchData.results).length === 0) {
