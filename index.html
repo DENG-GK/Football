@@ -694,6 +694,12 @@ const ALL_REFEREE_ASSIGNMENTS = [];
 
 
 const SCHEDULE = generateSchedule();
+// 第三轮：对调第1场和第4场
+{
+  const temp = SCHEDULE[2][0];
+  SCHEDULE[2][0] = SCHEDULE[2][3];
+  SCHEDULE[2][3] = temp;
+}
 for (let r = 0; r < 7; r++) ALL_REFEREE_ASSIGNMENTS.push(assignRefereesForRound(r));
 
 const IS_ADMIN = new URLSearchParams(window.location.search).get('admin') === 'true';
