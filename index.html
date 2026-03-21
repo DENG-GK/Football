@@ -702,6 +702,14 @@ const SCHEDULE = generateSchedule();
 }
 for (let r = 0; r < 7; r++) ALL_REFEREE_ASSIGNMENTS.push(assignRefereesForRound(r));
 
+// 第三轮临时改派：林睿、林胜彬缺席，由杨天一补位执裁
+ALL_REFEREE_ASSIGNMENTS[2] = [
+  ['杨天一', '夏明泽', '张亚鹏'],
+  ['何嘉豪', '张亚鹏', '杨天一'],
+  ['张亚鹏', '钟文', '夏明泽'],
+  ['杨天一', '夏明泽', '钟文']
+];
+
 const IS_ADMIN = new URLSearchParams(window.location.search).get('admin') === 'true';
 const FIREBASE_URL = 'https://foolball-cbd26-default-rtdb.asia-southeast1.firebasedatabase.app';
 
