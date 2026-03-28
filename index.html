@@ -971,10 +971,10 @@ function renderStandings() {
   Bracket structure (from planning doc diagram):
 
   Phase 1 (首轮):
-    ko_m1: A(1st) vs B(2nd)     [上半区]
-    ko_m2: C(3rd) vs D(4th)     [上半区]
-    ko_m3: E(5th) vs F(6th)     [下半区]
-    ko_m4: G(7th) vs H(8th)     [下半区]
+    ko_m1: A(1st) vs D(4th)     [上半区]
+    ko_m2: B(2nd) vs C(3rd)     [上半区]
+    ko_m3: E(5th) vs H(8th)     [下半区]
+    ko_m4: F(6th) vs G(7th)     [下半区]
 
   Phase 2:
     ko_m5: ko_m1胜 vs ko_m2胜   → ABCD胜者 (直通总决赛)
@@ -1030,10 +1030,10 @@ function resolveKnockoutBracket(seeds) {
   const bracket = {};
 
   // Phase 1
-  bracket.ko_m1 = { home: seeds.A, away: seeds.B };
-  bracket.ko_m2 = { home: seeds.C, away: seeds.D };
-  bracket.ko_m3 = { home: seeds.E, away: seeds.F };
-  bracket.ko_m4 = { home: seeds.G, away: seeds.H };
+  bracket.ko_m1 = { home: seeds.A, away: seeds.D };
+  bracket.ko_m2 = { home: seeds.B, away: seeds.C };
+  bracket.ko_m3 = { home: seeds.E, away: seeds.H };
+  bracket.ko_m4 = { home: seeds.F, away: seeds.G };
 
   // Resolve Phase 1
   const m1w = resolveWL('ko_m1', bracket);
@@ -1119,19 +1119,19 @@ function renderKnockout() {
   // Phase 1
   html += `<div class="ko-phase-label">首轮</div>`;
   html += `<div class="ko-section-title">上半区</div>`;
-  html += buildMatchCardHTML('ko_m1', bracket.ko_m1.home, bracket.ko_m1.away, 'A vs B');
-  html += buildMatchCardHTML('ko_m2', bracket.ko_m2.home, bracket.ko_m2.away, 'C vs D');
+  html += buildMatchCardHTML('ko_m1', bracket.ko_m1.home, bracket.ko_m1.away, 'A vs D');
+  html += buildMatchCardHTML('ko_m2', bracket.ko_m2.home, bracket.ko_m2.away, 'B vs C');
   html += `<div class="ko-section-title">下半区</div>`;
-  html += buildMatchCardHTML('ko_m3', bracket.ko_m3.home, bracket.ko_m3.away, 'E vs F');
-  html += buildMatchCardHTML('ko_m4', bracket.ko_m4.home, bracket.ko_m4.away, 'G vs H');
+  html += buildMatchCardHTML('ko_m3', bracket.ko_m3.home, bracket.ko_m3.away, 'E vs H');
+  html += buildMatchCardHTML('ko_m4', bracket.ko_m4.home, bracket.ko_m4.away, 'F vs G');
 
   // Phase 2
   html += `<div class="ko-phase-label">第二轮</div>`;
   html += `<div class="ko-section-title">上半区胜者对决</div>`;
   html += buildMatchCardHTML('ko_m5', bracket.ko_m5.home, bracket.ko_m5.away, 'A/B胜 vs C/D胜');
   html += `<div class="ko-section-title">交叉对决</div>`;
-  html += buildMatchCardHTML('ko_m6', bracket.ko_m6.home, bracket.ko_m6.away, 'E/F胜 vs A/B负');
-  html += buildMatchCardHTML('ko_m7', bracket.ko_m7.home, bracket.ko_m7.away, 'G/H胜 vs C/D负');
+  html += buildMatchCardHTML('ko_m6', bracket.ko_m6.home, bracket.ko_m6.away, 'E/H胜 vs A/D负');
+  html += buildMatchCardHTML('ko_m7', bracket.ko_m7.home, bracket.ko_m7.away, 'F/G胜 vs B/C负');
 
   // Phase 3
   html += `<div class="ko-phase-label">第三轮</div>`;
