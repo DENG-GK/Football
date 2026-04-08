@@ -605,6 +605,17 @@ const ROUND_DATES = [
 // Which rounds are Saturday (0-indexed): rounds 0,2,4,6
 const SATURDAY_ROUNDS = [0, 2, 4, 6];
 
+// 淘汰赛首轮：4月11日（周六）下午，时间段与第2轮相同
+const KO_ROUND_DATE = '4月11日（周六）';
+const KO_ROUND1_TIMES = ['14:30', '15:10', '15:50', '16:30'];
+// 下半区先踢，黄金右脚队（A签）压轴安排在最后一场 16:30
+const KO_ROUND1_ORDER = [
+  { key: 'ko_m3', label: 'E vs H' },
+  { key: 'ko_m4', label: 'F vs G' },
+  { key: 'ko_m2', label: 'B vs C' },
+  { key: 'ko_m1', label: 'A vs D' }
+];
+
 // Referees: name + team they belong to (null if not a player)
 const REFEREES = [
   { name: '杨天一', team: '大明星男模队' },
@@ -717,6 +728,30 @@ ALL_REFEREE_ASSIGNMENTS[3] = [
   ['林睿', '林胜彬'],
   ['杨天一', '张亚鹏']
 ];
+
+// 淘汰赛首轮裁判动态分配（根据实际对阵避开球员裁判冲突，均衡执裁场次）
+function assignKnockoutFirstRoundRefs(bracket) {
+  const matchTeams = KO_ROUND1_ORDER.map(m => {
+    const b = bracket[m.key];
+    return b ? [b.home, b.away].filter(t => t) : [];
+  });
+  const assignment = [[], [], [], []];
+  for (let slot = 0; slot < 3; slot++) {
+    for (let mi = 0; mi < 4; mi++) {
+      if (assignment[mi].length > slot) continue;
+      let bestRef = null, bestCount = Infinity;
+      for (const ref of REFEREES) {
+        if (assignment[mi].includes(ref.name)) continue;
+        if (ref.team && matchTeams[mi].includes(ref.team)) continue;
+        let total = 0;
+        for (let j = 0; j < 4; j++) if (assignment[j].includes(ref.name)) total++;
+        if (total < bestCount) { bestCount = total; bestRef = ref; }
+      }
+      if (bestRef) assignment[mi].push(bestRef.name);
+    }
+  }
+  return assignment;
+}
 
 const IS_ADMIN = new URLSearchParams(window.location.search).get('admin') === 'true';
 const FIREBASE_URL = 'https://foolball-cbd26-default-rtdb.asia-southeast1.firebasedatabase.app';
@@ -1092,16 +1127,9 @@ function renderKnockout() {
   }
 
   const bracket = resolveKnockoutBracket(seeds);
-  const koTime = matchData.roundTimes['knockout'] || '';
 
   let html = '';
-
-  // Round time for knockout
-  html += `<div class="round-time">${koTime || (IS_ADMIN ? '' : '比赛时间待定')}`;
-  if (IS_ADMIN) {
-    html += `<div class="time-edit"><input type="text" id="koTimeInput" placeholder="输入淘汰赛比赛时间" value="${koTime}" onchange="saveKoTime(this.value)"></div>`;
-  }
-  html += `</div>`;
+  html += `<div class="round-time">${KO_ROUND_DATE}</div>`;
 
   // Seed info
   html += `<div class="ko-seed-info">`;
@@ -1109,21 +1137,19 @@ function renderKnockout() {
   const labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
   const seedArr = [seeds.A, seeds.B, seeds.C, seeds.D, seeds.E, seeds.F, seeds.G, seeds.H];
   for (let i = 0; i < 8; i++) {
-    const zone = i < 4 ? '上半区' : '下半区';
     html += `<span class="seed-tag">${labels[i]}</span> 第${i + 1}名 ${seedArr[i]}${i < 7 ? '&nbsp;&nbsp;' : ''}`;
     if (i === 3) html += `<br>`;
   }
   html += `<br><div style="margin-top:6px; font-size:12px; opacity:0.7;">上半区(A-D)：双败淘汰 &nbsp;|&nbsp; 下半区(E-H)：单败淘汰，与上半区负者交叉</div>`;
   html += `</div>`;
 
-  // Phase 1
+  // Phase 1：下半区先踢，黄金右脚队（A签）压轴 16:30
   html += `<div class="ko-phase-label">首轮</div>`;
-  html += `<div class="ko-section-title">上半区</div>`;
-  html += buildMatchCardHTML('ko_m1', bracket.ko_m1.home, bracket.ko_m1.away, 'A vs D');
-  html += buildMatchCardHTML('ko_m2', bracket.ko_m2.home, bracket.ko_m2.away, 'B vs C');
-  html += `<div class="ko-section-title">下半区</div>`;
-  html += buildMatchCardHTML('ko_m3', bracket.ko_m3.home, bracket.ko_m3.away, 'E vs H');
-  html += buildMatchCardHTML('ko_m4', bracket.ko_m4.home, bracket.ko_m4.away, 'F vs G');
+  const koRound1Refs = assignKnockoutFirstRoundRefs(bracket);
+  KO_ROUND1_ORDER.forEach((item, i) => {
+    const b = bracket[item.key];
+    html += buildMatchCardHTML(item.key, b.home, b.away, item.label, '', KO_ROUND1_TIMES[i], koRound1Refs[i]);
+  });
 
   // Phase 2
   html += `<div class="ko-phase-label">第二轮</div>`;
