@@ -605,15 +605,13 @@ const ROUND_DATES = [
 // Which rounds are Saturday (0-indexed): rounds 0,2,4,6
 const SATURDAY_ROUNDS = [0, 2, 4, 6];
 
-// 淘汰赛首轮：4月11日（周六）下午，时间段与第2轮相同
-const KO_ROUND_DATE = '4月11日（周六）';
-const KO_ROUND1_TIMES = ['14:30', '15:10', '15:50', '16:30'];
+// 淘汰赛首轮：各场次时间不同
 // 下半区先踢，黄金右脚队（A签）压轴安排在最后一场 16:30
 const KO_ROUND1_ORDER = [
-  { key: 'ko_m3', label: 'E vs H' },
-  { key: 'ko_m4', label: 'F vs G' },
-  { key: 'ko_m2', label: 'B vs C' },
-  { key: 'ko_m1', label: 'A vs D' }
+  { key: 'ko_m3', label: 'E vs H', date: '4月15日（周三）', time: '14:00' },
+  { key: 'ko_m4', label: 'F vs G', date: '4月11日（周六）', time: '16:30' },
+  { key: 'ko_m2', label: 'B vs C', date: '4月12日（周日）', time: '10:00' },
+  { key: 'ko_m1', label: 'A vs D', date: '时间待定',        time: ''      }
 ];
 
 // Referees: name + team they belong to (null if not a player)
@@ -729,28 +727,41 @@ ALL_REFEREE_ASSIGNMENTS[3] = [
   ['杨天一', '张亚鹏']
 ];
 
-// 淘汰赛首轮裁判动态分配（根据实际对阵避开球员裁判冲突，均衡执裁场次）
+// 淘汰赛首轮裁判分配：ko_m1 固定；其余排除张亚鹏，自动均衡分配（至少2人）
 function assignKnockoutFirstRoundRefs(bracket) {
-  const matchTeams = KO_ROUND1_ORDER.map(m => {
-    const b = bracket[m.key];
-    return b ? [b.home, b.away].filter(t => t) : [];
+  // ko_m4（黄金右脚队场次）固定裁判
+  const result = { ko_m4: ['林胜彬', '钟文', '何嘉豪'] };
+
+  // 其余场次：张亚鹏请假不排
+  const otherItems = KO_ROUND1_ORDER.filter(m => m.key !== 'ko_m4');
+  const matchTeams = {};
+  otherItems.forEach(item => {
+    const b = bracket[item.key];
+    matchTeams[item.key] = b ? [b.home, b.away].filter(t => t) : [];
   });
-  const assignment = [[], [], [], []];
+  const assignment = {};
+  otherItems.forEach(item => { assignment[item.key] = []; });
+
+  const availableRefs = REFEREES.filter(r => r.name !== '张亚鹏');
+  const keys = otherItems.map(m => m.key);
+
   for (let slot = 0; slot < 3; slot++) {
-    for (let mi = 0; mi < 4; mi++) {
-      if (assignment[mi].length > slot) continue;
+    for (const key of keys) {
+      if (assignment[key].length > slot) continue;
       let bestRef = null, bestCount = Infinity;
-      for (const ref of REFEREES) {
-        if (assignment[mi].includes(ref.name)) continue;
-        if (ref.team && matchTeams[mi].includes(ref.team)) continue;
+      for (const ref of availableRefs) {
+        if (assignment[key].includes(ref.name)) continue;
+        if (ref.team && matchTeams[key].includes(ref.team)) continue;
         let total = 0;
-        for (let j = 0; j < 4; j++) if (assignment[j].includes(ref.name)) total++;
+        for (const k of keys) if (assignment[k].includes(ref.name)) total++;
         if (total < bestCount) { bestCount = total; bestRef = ref; }
       }
-      if (bestRef) assignment[mi].push(bestRef.name);
+      if (bestRef) assignment[key].push(bestRef.name);
     }
   }
-  return assignment;
+
+  keys.forEach(k => { result[k] = assignment[k]; });
+  return result;
 }
 
 const IS_ADMIN = new URLSearchParams(window.location.search).get('admin') === 'true';
@@ -1129,7 +1140,6 @@ function renderKnockout() {
   const bracket = resolveKnockoutBracket(seeds);
 
   let html = '';
-  html += `<div class="round-time">${KO_ROUND_DATE}</div>`;
 
   // Seed info
   html += `<div class="ko-seed-info">`;
@@ -1146,9 +1156,10 @@ function renderKnockout() {
   // Phase 1：下半区先踢，黄金右脚队（A签）压轴 16:30
   html += `<div class="ko-phase-label">首轮</div>`;
   const koRound1Refs = assignKnockoutFirstRoundRefs(bracket);
-  KO_ROUND1_ORDER.forEach((item, i) => {
+  KO_ROUND1_ORDER.forEach((item) => {
     const b = bracket[item.key];
-    html += buildMatchCardHTML(item.key, b.home, b.away, item.label, '', KO_ROUND1_TIMES[i], koRound1Refs[i]);
+    const timeLabel = item.time ? `${item.date} ${item.time}` : item.date;
+    html += buildMatchCardHTML(item.key, b.home, b.away, item.label, '', timeLabel, koRound1Refs[item.key]);
   });
 
   // Phase 2
