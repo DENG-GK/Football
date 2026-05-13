@@ -986,23 +986,20 @@ function buildMatchCardHTML(key, homeTeam, awayTeam, label, extraClass, matchTim
 function saveMatch(key, isKnockout) {
   const hg = document.getElementById(key + '_hg').value;
   const ag = document.getElementById(key + '_ag').value;
-  const hy = document.getElementById(key + '_hy').value;
-  const hr = document.getElementById(key + '_hr').value;
-  const ay = document.getElementById(key + '_ay').value;
-  const ar = document.getElementById(key + '_ar').value;
 
   if (hg === '' || ag === '') {
     alert('请输入双方进球数');
     return;
   }
 
+  const getVal = id => { const el = document.getElementById(id); return el ? el.value : ''; };
   matchData.results[key] = {
     homeGoals: parseInt(hg),
     awayGoals: parseInt(ag),
-    homeYellow: parseInt(hy) || 0,
-    homeRed: parseInt(hr) || 0,
-    awayYellow: parseInt(ay) || 0,
-    awayRed: parseInt(ar) || 0
+    homeYellow: parseInt(getVal(key + '_hy')) || 0,
+    homeRed:    parseInt(getVal(key + '_hr')) || 0,
+    awayYellow: parseInt(getVal(key + '_ay')) || 0,
+    awayRed:    parseInt(getVal(key + '_ar')) || 0
   };
   saveData();
 
