@@ -439,13 +439,44 @@
 
   .champion-banner {
     text-align: center;
-    padding: 16px;
-    margin-top: 8px;
-    font-size: 22px;
+    margin: 28px auto 8px;
+    max-width: 360px;
+    padding: 28px 24px 24px;
+    background: linear-gradient(135deg, rgba(245,197,24,0.18) 0%, rgba(255,255,255,0.06) 100%);
+    border: 2px solid rgba(245,197,24,0.6);
+    border-radius: 18px;
+    box-shadow: 0 0 32px rgba(245,197,24,0.25), inset 0 1px 0 rgba(255,255,255,0.15);
+    animation: championGlow 2s ease-in-out infinite alternate;
+  }
+  @keyframes championGlow {
+    from { box-shadow: 0 0 20px rgba(245,197,24,0.2); }
+    to   { box-shadow: 0 0 44px rgba(245,197,24,0.5); }
+  }
+  .champion-trophy {
+    font-size: 64px;
+    line-height: 1;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 0 12px rgba(245,197,24,0.7));
+  }
+  .champion-title {
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .champion-name {
+    font-size: 28px;
     font-weight: bold;
     color: #f5c518;
-    text-shadow: 0 0 15px rgba(245,197,24,0.5);
-    letter-spacing: 3px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 20px rgba(245,197,24,0.6);
+  }
+  .champion-sub {
+    margin-top: 10px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 1px;
   }
 
   /* Match info bar (time + referees) */
@@ -1341,7 +1372,13 @@ function renderKnockout() {
   const finalResult = getMatchWinner('ko_m10');
   if (finalResult && bracket.ko_m10.home && bracket.ko_m10.away) {
     const champion = finalResult === 'home' ? bracket.ko_m10.home : bracket.ko_m10.away;
-    container.insertAdjacentHTML('beforeend', `<div class="champion-banner">&#127942; 总冠军：${champion} &#127942;</div>`);
+    container.insertAdjacentHTML('beforeend', `
+      <div class="champion-banner">
+        <div class="champion-trophy">🏆</div>
+        <div class="champion-title">第一届 机电杯 冠军</div>
+        <div class="champion-name">${champion}</div>
+        <div class="champion-sub">恭喜夺冠！</div>
+      </div>`);
   }
 }
 
